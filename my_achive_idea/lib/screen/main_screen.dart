@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:intl/intl.dart';
+import 'package:my_achive_idea/data/idea_info.dart';
+import 'package:my_achive_idea/database/database_helper.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -9,6 +12,23 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // db 접근을 용이하게 해주는 유틸 객체
+  var dbHelper = DatabaseHelper();
+
+  // 아이디어 목록 데이터들이 담길 공간
+  List<IdeaInfo> listIdeaInfo = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 아이디어 목록들 가져오기
+    getIdeaInfo();
+
+    //임시용 insert data
+    //setInsertIdeaInfo();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
       body: Container(
         margin: const EdgeInsets.all(16),
         child: ListView.builder(
-          itemCount: 10,
+          itemCount: listIdeaInfo.length,
           itemBuilder: (context, index) {
             return listItem(index);
           },
@@ -36,6 +56,7 @@ class _MainScreenState extends State<MainScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // 새 아이디어 작성 화면으로 이동
+          Navigator.pushNamed(context, '/edit');
         },
         backgroundColor: const Color(0xff7f52fd).withOpacity(0.7),
         child: Image.asset(
@@ -69,9 +90,10 @@ class _MainScreenState extends State<MainScreen> {
               left: 16,
               bottom: 16,
             ),
-            child: const Text(
-              '#환경보존 문제해결 앱 아이디어',
-              style: TextStyle(
+            child: Text(
+              listIdeaInfo[index].title,
+              // 'ddddd',
+              style: const TextStyle(
                 fontSize: 16,
               ),
             ),
@@ -81,9 +103,12 @@ class _MainScreenState extends State<MainScreen> {
             alignment: Alignment.bottomRight,
             child: Container(
               margin: const EdgeInsets.only(right: 16, bottom: 8),
-              child: const Text(
-                '2023.11.23 09:00',
-                style: TextStyle(
+              child: Text(
+                DateFormat('yyyy.MM.dd HH:mm').format(
+                    DateTime.fromMillisecondsSinceEpoch(
+                        listIdeaInfo[index].createAt)),
+                // '1234',
+                style: const TextStyle(
                   color: Color(0xffaeaeae),
                   fontSize: 10,
                 ),
@@ -96,7 +121,7 @@ class _MainScreenState extends State<MainScreen> {
             child: Container(
               margin: const EdgeInsets.only(left: 16, bottom: 8),
               child: RatingBar.builder(
-                initialRating: 3,
+                initialRating: listIdeaInfo[index].priority.toDouble(),
                 minRating: 1,
                 direction: Axis.horizontal,
                 itemCount: 5,
@@ -116,6 +141,30 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> getIdeaInfo() async {
+    // 아이디어 목록 조회
+    await dbHelper.initDatabase();
+    listIdeaInfo = await dbHelper.getAllIdeaInfo();
+
+    // 리스트 객체 역순으로 정렬
+    listIdeaInfo.sort((a, b) => b.createAt.compareTo(a.createAt));
+    setState(() {});
+  }
+
+  Future setInsertIdeaInfo() async {
+    await dbHelper.initDatabase();
+
+    await dbHelper.insertIdeaInfo(
+      IdeaInfo(
+          title: '# 환경 보존 문제해결 앱 아이디어',
+          motive: '길가다가 쓰레기 주우면서 생각',
+          content: '자세한 내용 입니다..',
+          priority: 5,
+          feedback: '피드백 사항',
+          createAt: DateTime.now().millisecondsSinceEpoch),
     );
   }
 }
