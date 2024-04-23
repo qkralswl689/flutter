@@ -47,6 +47,6 @@
 	<true/>
 	<!-- ios 권한 추가 -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>갤러리 권한을 허가해주세요</string>
+    <string>갤러기 권한을 허가해주세요.</string>
 </dict>
 </plist>
